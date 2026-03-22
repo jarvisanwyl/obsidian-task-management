@@ -304,6 +304,210 @@ def parse_task_line(line: str) -> Optional[Dict[str, Any]]:
     }
 
 
+def delete_completed_tasks_per_cache(
+    vault_path: str,
+    cache_file_path: str,
+    keep_days: int = 0,
+    dry_run: bool = False,
+) -> Dict[str, Any]:
+    """
+    Delete completed tasks listed in a JSON cache.
+
+    Parameters
+    ----------
+    vault_path : str
+        Path to Obsidian vault root.
+    cache_file_path : str
+        Path to JSON cache file (must exist).
+    keep_days : int, default 0
+        Number of days of completed tasks to keep (0 = delete all).
+        Currently not implemented; all completed tasks are deleted.
+    dry_run : bool, default False
+        If True, only simulate deletion and report what would be deleted.
+
+    Returns
+    -------
+    Dict[str, Any]
+        Statistics:
+        - "tasks_deleted": number of tasks removed (or would be removed)
+        - "files_modified": number of note files changed (or would be changed)
+        - "errors": list of error messages (empty if none)
+        - "skipped_notes": number of notes skipped (not found or no matches)
+        - "dry_run": True if dry_run was requested
+    """
+    # Load cache
+    cache_path = Path(cache_file_path).expanduser().resolve()
+    if not cache_path.exists():
+        raise FileNotFoundError(f"Cache file not found: {cache_path}")
+
+    with open(cache_path, "r", encoding="utf-8") as f:
+        tasks = json.load(f)
+
+    # Filter completed tasks
+    completed_tasks = [t for t in tasks if t.get("completed") is True]
+    if not completed_tasks:
+        return {
+            "tasks_deleted": 0,
+            "files_modified": 0,
+            "errors": [],
+            "skipped_notes": 0,
+            "dry_run": dry_run,
+        }
+
+    # Group by note_path
+    notes_dict = {}
+    for task in completed_tasks:
+        note_path = task.get("note_path")
+        if note_path is None:
+            continue
+        notes_dict.setdefault(note_path, []).append(task)
+
+    vault_root = Path(vault_path).expanduser().resolve()
+    stats = {
+        "tasks_deleted": 0,
+        "files_modified": 0,
+        "errors": [],
+        "skipped_notes": 0,
+        "dry_run": dry_run,
+    }
+
+    # Helper to clean a task description (remove tags, date markers, priority icons)
+    def clean_description(text: str) -> str:
+        """Remove tags (#tag), date markers (📅 YYYY-MM-DD), priority icons."""
+        # Remove tags
+        words = text.split()
+        words = [w for w in words if not w.startswith("#")]
+        text = " ".join(words)
+        # Remove date marker 📅 YYYY-MM-DD
+        text = re.sub(r"📅\s*\d{4}-\d{2}-\d{2}", "", text)
+        # Remove priority icons
+        for icon in ("⏫", "🔺", "🔽"):
+            text = text.replace(icon, "")
+        # Normalize whitespace
+        text = re.sub(r"\s+", " ", text).strip()
+        return text
+
+    # Process each note
+    for note_rel, note_tasks in notes_dict.items():
+        note_abs = vault_root / note_rel
+        if not note_abs.exists():
+            stats["skipped_notes"] += 1
+            stats["errors"].append(f"Note not found: {note_rel}")
+            continue
+
+        try:
+            with open(note_abs, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+        except Exception as e:
+            stats["skipped_notes"] += 1
+            stats["errors"].append(f"Could not read {note_rel}: {e}")
+            continue
+
+        # Determine which lines to delete
+        lines_to_delete = set()
+        for i, line in enumerate(lines):
+            line_stripped = line.strip()
+            if not line_stripped:
+                continue
+            # Check if this line is a completed task ([x] or [X])
+            if not re.match(r"^[ \t]*[-*+][ \t]+\[[xX]\]", line_stripped):
+                continue
+            # Remove bullet and checkbox
+            desc_start = line_stripped.find("]") + 1
+            raw_desc = line_stripped[desc_start:].strip()
+            cleaned_desc = clean_description(raw_desc)
+            for task in note_tasks:
+                cached_desc = task.get("task", "")
+                if cached_desc and cached_desc == cleaned_desc:
+                    # Exact match
+                    lines_to_delete.add(i)
+                    # If dry run, print the line that would be deleted
+                    if dry_run:
+                        print(f"DRY RUN: Would delete line {i+1} in {note_rel}: {line_stripped}")
+                    break
+
+        if not lines_to_delete:
+            stats["skipped_notes"] += 1
+            continue
+
+        if not dry_run:
+            # Write back the file with those lines removed
+            new_lines = [line for i, line in enumerate(lines) if i not in lines_to_delete]
+            try:
+                with open(note_abs, "w", encoding="utf-8") as f:
+                    f.writelines(new_lines)
+            except Exception as e:
+                stats["errors"].append(f"Could not write {note_rel}: {e}")
+                continue
+
+        stats["tasks_deleted"] += len(lines_to_delete)
+        if not dry_run:
+            stats["files_modified"] += 1
+
+    return stats
+
+
+def delete_completed_tasks(
+    vault_path: Optional[str] = None,
+    cache_file_path: Optional[str] = None,
+    refresh_cache: bool = False,
+    keep_days: int = 0,
+    dry_run: bool = False,
+) -> Dict[str, Any]:
+    """
+    High‑level function to delete completed tasks from an Obsidian vault.
+
+    Parameters
+    ----------
+    vault_path : str, optional
+        Path to Obsidian vault root. Defaults from OVTM_VAULT_PATH environment variable.
+    cache_file_path : str, optional
+        Path to JSON cache file. Defaults from OVTM_TASK_CACHE_FILEPATH.
+    refresh_cache : bool, default False
+        If True, refresh the cache before deletion.
+    keep_days : int, default 0
+        Number of days of completed tasks to keep (0 = delete all).
+        Currently not implemented.
+    dry_run : bool, default False
+        If True, only simulate deletion and report what would be deleted.
+
+    Returns
+    -------
+    Dict[str, Any]
+        Statistics from delete_completed_tasks_per_cache.
+    """
+    # Load environment variables from .env file if available
+    load_env()
+    if vault_path is not None:
+        vault_env_path = Path(vault_path) / ".env"
+        if vault_env_path.exists():
+            load_env(vault_env_path)
+
+    # Resolve paths from environment variables if not provided
+    if vault_path is None:
+        vault_path = os.environ.get("OVTM_VAULT_PATH")
+        if vault_path is None:
+            raise ValueError(
+                "vault_path must be provided or OVTM_VAULT_PATH must be set"
+            )
+    if cache_file_path is None:
+        cache_file_path = os.environ.get("OVTM_TASK_CACHE_FILEPATH")
+        if cache_file_path is None:
+            raise ValueError(
+                "cache_file_path must be provided or OVTM_TASK_CACHE_FILEPATH must be set"
+            )
+
+    vault_path = Path(vault_path).expanduser().resolve()
+    cache_file_path = Path(cache_file_path).expanduser().resolve()
+
+    if refresh_cache:
+        refresh_tasks_cache(str(vault_path), str(cache_file_path))
+
+    return delete_completed_tasks_per_cache(
+        str(vault_path), str(cache_file_path), keep_days, dry_run
+    )
+
+
 if __name__ == "__main__":
     # For quick testing
     import sys

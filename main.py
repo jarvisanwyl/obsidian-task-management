@@ -6,21 +6,44 @@ Obsidian Task Management - Command line interface.
 import argparse
 import sys
 from pathlib import Path
+from typing import Optional
 import os
 
 # Import core functions
 try:
-    from obsidian_tasks import refresh_tasks_cache, load_env
+    from obsidian_tasks import refresh_tasks_cache, delete_completed_tasks, load_env
 except ImportError:
     print("Error: Could not import obsidian_tasks module.")
     sys.exit(1)
 
 
-def clean_tasks(vault_path: Path, dry_run: bool = False):
-    """Delete completed tasks from markdown files."""
-    # TODO: Implement
-    print(f"Cleaning completed tasks in {vault_path} (dry_run={dry_run})")
-    print("Not implemented yet.")
+def clean_tasks(
+    vault_path: Path,
+    cache_file_path: Optional[Path],
+    dry_run: bool = False,
+    refresh_cache: bool = False,
+    keep_days: int = 0,
+) -> None:
+    """
+    Delete completed tasks from markdown files.
+    """
+    stats = delete_completed_tasks(
+        vault_path=str(vault_path),
+        cache_file_path=str(cache_file_path) if cache_file_path else None,
+        refresh_cache=refresh_cache,
+        keep_days=keep_days,
+        dry_run=dry_run,
+    )
+    print("\n=== Deletion Statistics ===")
+    print(f"Tasks deleted: {stats['tasks_deleted']}")
+    print(f"Files modified: {stats['files_modified']}")
+    print(f"Skipped notes: {stats['skipped_notes']}")
+    if stats.get('dry_run'):
+        print("(Dry run – no changes were written)")
+    if stats['errors']:
+        print(f"\nErrors ({len(stats['errors'])}):")
+        for err in stats['errors']:
+            print(f"  - {err}")
 
 
 def main():
@@ -34,6 +57,8 @@ def main():
 Examples:
   %(prog)s --vault ~/obsidian-vault --clean --dry-run
   %(prog)s --vault ~/obsidian-vault --clean
+  %(prog)s --vault ~/obsidian-vault --clean --refresh-cache
+  %(prog)s --vault ~/obsidian-vault --clean --keep-days 2
   %(prog)s --refresh-cache
   %(prog)s --vault ~/obsidian-vault --cache-file ~/tasks.json
 
@@ -71,12 +96,18 @@ Environment variables (can be set in .env file):
         dest="cache_file_path",
         help="Path to write tasks cache (overrides OVTM_TASK_CACHE_FILEPATH)",
     )
+    parser.add_argument(
+        "--keep-days",
+        dest="keep_days",
+        type=int,
+        default=0,
+        help="Number of days of completed tasks to keep (0 = delete all, 1 = keep today's, etc.)",
+    )
 
     args = parser.parse_args()
 
     # Validate arguments
-    if args.clean and args.refresh_cache:
-        parser.error("--clean and --refresh-cache are mutually exclusive")
+    # (--clean and --refresh‑cache can be combined; refresh‑cache will run before deletion)
 
     if args.dry_run and not args.clean:
         parser.error("--dry-run requires --clean")
@@ -99,7 +130,14 @@ Environment variables (can be set in .env file):
 
     # Execute actions
     if args.clean:
-        clean_tasks(Path(vault_path).expanduser().resolve(), dry_run=args.dry_run)
+        cache_path = Path(cache_file_path).expanduser().resolve() if cache_file_path else None
+        clean_tasks(
+            vault_path=Path(vault_path).expanduser().resolve(),
+            cache_file_path=cache_path,
+            dry_run=args.dry_run,
+            refresh_cache=args.refresh_cache,
+            keep_days=args.keep_days,
+        )
     elif args.refresh_cache:
         refresh_tasks_cache(vault_path, cache_file_path)
     else:
