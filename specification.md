@@ -70,6 +70,7 @@ Obsidian vaults often contain many task lists in markdown files. Completed tasks
 - Process files efficiently (consider large vaults with thousands of files)
   - First filter: skip `.md` files that don't contain an opening square bracket `[`
   - Second filter: read frontmatter (YAML between `---`) and keep only notes with `status: active`
+- Frontmatter parsing: implement a simple YAML subset parser for `status` and `tags` fields (no external dependency). If more complex frontmatter is needed later, consider adding `pyyaml` dependency.
 - Create backup of files before deletion (or implement dry-run mode)
 - Command-line interface with options for each function
 - Logging for operations performed
@@ -97,6 +98,7 @@ python obsidian_tasks.py --vault ~/obsidian-vault --cache-file ~/tasks.json
   - `json` for JSON output
   - `pathlib` for file operations
   - `argparse` for CLI
+  - `yaml` (simple custom parser) for frontmatter parsing (subset of YAML for `status` and `tags` fields only)
 
 ## Future Enhancements
 - Support for different task formats (dataview, tasks plugin)
