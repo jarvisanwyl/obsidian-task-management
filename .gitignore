@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.env
+*.egg-info/
+dist/
+build/
+*.log
+
+# Local test files
+test_vault/
+test_tasks.json
+test_*.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
