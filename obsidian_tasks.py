@@ -307,7 +307,6 @@ def parse_task_line(line: str) -> Optional[Dict[str, Any]]:
 def delete_completed_tasks_per_cache(
     vault_path: str,
     cache_file_path: str,
-    keep_days: int = 0,
     dry_run: bool = False,
 ) -> Dict[str, Any]:
     """
@@ -319,9 +318,6 @@ def delete_completed_tasks_per_cache(
         Path to Obsidian vault root.
     cache_file_path : str
         Path to JSON cache file (must exist).
-    keep_days : int, default 0
-        Number of days of completed tasks to keep (0 = delete all).
-        Currently not implemented; all completed tasks are deleted.
     dry_run : bool, default False
         If True, only simulate deletion and report what would be deleted.
 
@@ -451,7 +447,6 @@ def delete_completed_tasks(
     vault_path: Optional[str] = None,
     cache_file_path: Optional[str] = None,
     refresh_cache: bool = False,
-    keep_days: int = 0,
     dry_run: bool = False,
 ) -> Dict[str, Any]:
     """
@@ -465,9 +460,6 @@ def delete_completed_tasks(
         Path to JSON cache file. Defaults from OVTM_TASK_CACHE_FILEPATH.
     refresh_cache : bool, default False
         If True, refresh the cache before deletion.
-    keep_days : int, default 0
-        Number of days of completed tasks to keep (0 = delete all).
-        Currently not implemented.
     dry_run : bool, default False
         If True, only simulate deletion and report what would be deleted.
 
@@ -504,7 +496,7 @@ def delete_completed_tasks(
         refresh_tasks_cache(str(vault_path), str(cache_file_path))
 
     return delete_completed_tasks_per_cache(
-        str(vault_path), str(cache_file_path), keep_days, dry_run
+        str(vault_path), str(cache_file_path), dry_run
     )
 
 
