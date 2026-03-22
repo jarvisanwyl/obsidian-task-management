@@ -74,7 +74,7 @@ Obsidian vaults often contain many task lists in markdown files. Completed tasks
 - Create backup of files before deletion (or implement dry-run mode)
 - Command-line interface with options for each function
 - Logging for operations performed
-- Environment variables `OVTM_VAULT_PATH` and `OVTM_TASK_CACHE_FILEPATH` provide defaults
+- Environment variables `OVTM_VAULT_PATH` and `OVTM_TASK_CACHE_FILEPATH` provide defaults; can be set in `.env` file (python‑dotenv optional dependency)
 
 ## Usage Examples
 ```bash
@@ -93,12 +93,13 @@ python obsidian_tasks.py --vault ~/obsidian-vault --cache-file ~/tasks.json
 
 ## Dependencies
 - Python 3.12+
-- Standard library only (no external packages initially):
+- Standard library plus optional python‑dotenv for .env loading:
   - `re` for regex patterns
   - `json` for JSON output
   - `pathlib` for file operations
   - `argparse` for CLI
   - `yaml` (simple custom parser) for frontmatter parsing (subset of YAML for `status` and `tags` fields only)
+  - `python‑dotenv` (optional) for loading environment variables from `.env` files
 
 ## Future Enhancements
 - Support for different task formats (dataview, tasks plugin)

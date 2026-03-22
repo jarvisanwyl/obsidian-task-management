@@ -10,6 +10,26 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any, Tuple
 import os
 
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
+
+
+def load_env(env_path: Optional[Path] = None) -> None:
+    """
+    Load environment variables from .env file if dotenv is available.
+    
+    If dotenv is not installed, this function does nothing.
+    If env_path is not provided, looks for .env in current directory and parent directories.
+    """
+    if load_dotenv is None:
+        return
+    if env_path is None:
+        load_dotenv(override=True)
+    else:
+        load_dotenv(dotenv_path=env_path, override=True)
+
 
 def refresh_tasks_cache(
     vault_path: Optional[str] = None,
@@ -32,6 +52,14 @@ def refresh_tasks_cache(
     ValueError
         If vault_path is not provided and OVTM_VAULT_PATH is not set.
     """
+    # Load environment variables from .env file if available
+    load_env()
+    if vault_path is not None:
+        # Also try to load .env from the vault directory
+        vault_env_path = Path(vault_path) / ".env"
+        if vault_env_path.exists():
+            load_env(vault_env_path)
+    
     # Resolve paths from environment variables if not provided
     if vault_path is None:
         vault_path = os.environ.get("OVTM_VAULT_PATH")

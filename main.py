@@ -10,7 +10,7 @@ import os
 
 # Import core functions
 try:
-    from obsidian_tasks import refresh_tasks_cache
+    from obsidian_tasks import refresh_tasks_cache, load_env
 except ImportError:
     print("Error: Could not import obsidian_tasks module.")
     sys.exit(1)
@@ -24,6 +24,9 @@ def clean_tasks(vault_path: Path, dry_run: bool = False):
 
 
 def main():
+    # Load environment variables from .env file if available
+    load_env()
+    
     parser = argparse.ArgumentParser(
         description="Manage tasks in an Obsidian vault.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -34,7 +37,7 @@ Examples:
   %(prog)s --refresh-cache
   %(prog)s --vault ~/obsidian-vault --cache-file ~/tasks.json
 
-Environment variables:
+Environment variables (can be set in .env file):
   OVTM_VAULT_PATH          default vault path
   OVTM_TASK_CACHE_FILEPATH default cache file path
 """,
