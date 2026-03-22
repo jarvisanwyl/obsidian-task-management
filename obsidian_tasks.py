@@ -143,6 +143,7 @@ def refresh_tasks_cache(
                 "note_path": note_path,
                 "note_tags": note_tags,
                 "task_tags": task_data["tags"],
+                "completed": task_data["completed"],
             }
             tasks.append(task_obj)
 
@@ -228,11 +229,11 @@ def parse_frontmatter(content: str) -> Dict[str, Any]:
 
 def find_task_lines(content: str) -> List[str]:
     """
-    Find all active task lines (with empty checkbox) in markdown content.
-    Returns list of lines that match task pattern.
+    Find all task lines (with checkbox) in markdown content.
+    Returns list of lines that match task pattern, both active [ ] and completed [x]/[X].
     """
-    # Pattern: dash, space, bracket, space, bracket, space, rest of line
-    task_pattern = r"^[ \t]*[-*+][ \t]+\[ \][ \t]+.*$"
+    # Pattern: dash, space, bracket, space or x/X, bracket, space, rest of line
+    task_pattern = r"^[ \t]*[-*+][ \t]+\[[ xX]\][ \t]+.*$"
     lines = []
     for line in content.splitlines():
         if re.match(task_pattern, line):
@@ -243,16 +244,18 @@ def find_task_lines(content: str) -> List[str]:
 def parse_task_line(line: str) -> Optional[Dict[str, Any]]:
     """
     Parse a single task line into structured data.
-    Returns dict with keys: description, due_date, priority, tags.
+    Returns dict with keys: description, due_date, priority, tags, completed.
     """
     # Remove leading whitespace and bullet
     line = line.strip()
     # Remove bullet: could be -, *, +
     if line.startswith("- ") or line.startswith("* ") or line.startswith("+ "):
         line = line[2:].strip()
-    # Expect [ ] or [x] at start now
-    if not (line.startswith("[ ] ") or line.startswith("[x] ")):
+    # Expect [ ], [x], or [X] at start now
+    if not (line.startswith("[ ] ") or line[:4].lower() == "[x] "):
         return None
+    # Determine completion status
+    completed = line[:4].lower() == "[x] "
     # Remove checkbox
     line = line[4:].strip()
 
@@ -297,6 +300,7 @@ def parse_task_line(line: str) -> Optional[Dict[str, Any]]:
         "due_date": due_date,
         "priority": priority,
         "tags": tags,
+        "completed": completed,
     }
 
 

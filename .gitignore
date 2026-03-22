@@ -16,6 +16,7 @@ build/
 # Local test files
 test_vault/
 test_tasks.json
+test_*.json
 test_*.py
 
 # IDE

@@ -15,10 +15,11 @@ Obsidian vaults often contain many task lists in markdown files. Completed tasks
 
 ## Outputs
 1. **Clean vault**: Markdown files with completed tasks removed
-2. **Tasks cache JSON**: File containing all active tasks from notes with `status: active`, structured as:
+2. **Tasks cache JSON**: File containing all tasks (active and completed) from notes with `status: active`, structured as:
    - `task`: Description text
    - `due_date`: ISO date (`YYYY‑MM‑DD`) if present, else `null`
    - `priority`: `"high"`, `"medium"`, `"low"` (mapped from icons), else `null`
+   - `completed`: boolean (true for `[x]`/`[X]`, false for `[ ]`)
    - `note_path`: Relative path from vault root
    - `note_tags`: List of tags from note frontmatter
    - `task_tags`: List of tags attached to the specific task
@@ -40,13 +41,12 @@ Obsidian vaults often contain many task lists in markdown files. Completed tasks
   2. Skip files that do not contain an opening square bracket `[` (quick filter)
   3. For remaining files, read frontmatter (YAML between `---` delimiters)
   4. Keep only files whose frontmatter includes `status: active`
-- **Task extraction**: For each kept file, locate all task lines:
-  - Active tasks: lines containing `[ ]` (empty checkbox)
-  - Optionally also capture completed tasks `[x]` for reporting (but not for cache)
+- **Task extraction**: For each kept file, locate all task lines with checkboxes (`[ ]`, `[x]`, `[X]`). Include both active and completed tasks.
 - **Task parsing**: For each task line extract:
   - `task`: The description text after the checkbox (trimmed)
   - `due_date`: If a date in ISO format `YYYY‑MM‑DD` appears (e.g., `📅 2026‑03‑25`), capture it; otherwise `null`
   - `priority`: If a priority icon (`⏫`, `🔺`, `🔽` or similar) appears, map to `"high"`, `"medium"`, `"low"`; otherwise `null`
+  - `completed`: boolean (true for `[x]`/`[X]`, false for `[ ]`)
   - `note_path`: Path relative to vault root (e.g., `"folder/note.md"`)
   - `note_tags`: List of tags from the note's frontmatter (field `tags`, usually a YAML list)
   - `task_tags`: List of tags attached to this specific task (tags that appear inline, e.g., `#tag`)
@@ -57,6 +57,7 @@ Obsidian vaults often contain many task lists in markdown files. Completed tasks
       "task": "Task description",
       "due_date": "2026‑03‑25",   // optional, null if not present
       "priority": "high",          // optional, null if not present
+      "completed": false,          // boolean: true for [x]/[X], false for [ ]
       "note_path": "folder/note.md",
       "note_tags": ["project", "meeting"],
       "task_tags": ["urgent", "review"]
