@@ -74,7 +74,7 @@ Obsidian vaults often contain many task lists in markdown files. Completed tasks
 - Create backup of files before deletion (or implement dry-run mode)
 - Command-line interface with options for each function
 - Logging for operations performed
-- Environment variables `OVTM_VAULT_PATH` and `OVTM_TASK_CACHE_FILEPATH` provide defaults; can be set in `.env` file (python‑dotenv optional dependency)
+- Environment variables `OVTM_VAULT_PATH` and `OVTM_TASK_CACHE_FILEPATH` provide defaults; can be set in `.env` file (python‑dotenv optional dependency). If a vault path is provided, a `.env` file inside the vault directory will also be loaded.
 
 ## Usage Examples
 ```bash
