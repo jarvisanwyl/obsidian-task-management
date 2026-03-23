@@ -282,8 +282,8 @@ def parse_task_line(line: str) -> Optional[Dict[str, Any]]:
     # Extract priority icons
     priority = None
     priority_map = {
-        "⏫": "high",
-        "🔺": "medium",
+        "🔺": "high",
+        "🔼": "medium",
         "🔽": "low",
     }
     for icon, level in priority_map.items():
