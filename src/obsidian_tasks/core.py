@@ -4,11 +4,12 @@ Obsidian Task Management - Core functionality.
 """
 
 import json
+import os
 import re
 import sys
+import tempfile
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Tuple
-import os
 
 try:
     from dotenv import load_dotenv
@@ -150,9 +151,34 @@ def refresh_tasks_cache(
 
     print(f"Extracted {len(tasks)} tasks.")
 
-    # Write JSON cache
-    with open(cache_path, "w", encoding="utf-8") as f:
-        json.dump(tasks, f, indent=2, ensure_ascii=False)
+    # Write JSON cache atomically using temp file + rename
+    temp_file = None
+    try:
+        # Create temporary file in the same directory as cache path
+        cache_dir = cache_path.parent
+        with tempfile.NamedTemporaryFile(
+            mode='w',
+            encoding='utf-8',
+            dir=cache_dir,
+            suffix='.tmp',
+            delete=False
+        ) as f:
+            temp_file = f
+            json.dump(tasks, f, indent=2, ensure_ascii=False)
+            # Ensure all data is written to disk
+            f.flush()
+            os.fsync(f.fileno())
+
+        # Atomically rename temp file to final path
+        os.replace(temp_file.name, str(cache_path))
+
+    finally:
+        # Clean up temp file if it still exists
+        if temp_file and os.path.exists(temp_file.name):
+            try:
+                os.unlink(temp_file.name)
+            except Exception:
+                pass
 
     print(f"Cache written to {cache_path}")
 
