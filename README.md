@@ -69,6 +69,71 @@ Set environment variables `OVTM_VAULT_PATH` and `OVTM_TASK_CACHE_FILEPATH` or pa
 - **Safe operations**: Dry-run mode available before making changes
 - **Flexible configuration**: Customize task patterns and output formats
 
+## Task Format
+
+The package supports standard Obsidian task syntax with optional metadata:
+
+### Basic Task Format
+```markdown
+- [ ] Task description
+```
+
+### Completed Task Format
+```markdown
+- [x] Completed task description
+```
+
+### Optional Task Metadata
+
+#### Priority (using second brain icons)
+```markdown
+- [ ] High priority task 🔺
+- [ ] Medium priority task 🔼
+- [ ] Low priority task 🔽
+```
+
+#### Due Date
+```markdown
+- [ ] Task with due date 📅 2026-03-23
+```
+
+#### Tags
+```markdown
+- [ ] Task with tags #tag1 #tag2
+- [ ] Task with metadata 📅 2026-03-23 #tag 🔼
+```
+
+### Complete Example
+```markdown
+- [ ] Review documentation 🔼 📅 2026-03-23 #project #review
+```
+
+### Frontmatter Requirements
+
+For tasks to be included in the cache scan:
+- Notes must have `status: active` in frontmatter
+- `tags` field should be defined (list of strings)
+
+Example frontmatter:
+```yaml
+---
+status: active
+tags:
+  - python
+  - development
+---
+```
+
+The package extracts:
+- `task`: Cleaned description (without tags, dates, priorities)
+- `task_line`: Full raw line (for exact matching)
+- `due_date`: ISO date (YYYY-MM-DD) if present, otherwise `null`
+- `priority`: `"high"`, `"medium"`, or `"low"` (mapped from icons)
+- `completed`: Boolean (true for `[x]`, false for `[ ]`)
+- `note_path`: Relative path from vault root
+- `note_tags`: List of tags from note frontmatter
+- `task_tags`: List of tags attached to the task
+
 ## Project Structure
 ```
 obsidian-task-management/
