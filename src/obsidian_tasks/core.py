@@ -397,6 +397,9 @@ def delete_completed_tasks_per_cache(
         "dry_run": dry_run,
     }
 
+    # Collect deleted tasks for logging
+    deleted_tasks_log = []
+
     # Process each note
     for note_rel, note_tasks in notes_dict.items():
         note_abs = vault_root / note_rel
@@ -447,9 +450,28 @@ def delete_completed_tasks_per_cache(
                 stats["errors"].append(f"Could not write {note_rel}: {e}")
                 continue
 
+            # Record deleted tasks for logging
+            for i in lines_to_delete:
+                line = lines[i].strip()
+                deleted_tasks_log.append(f"{note_abs} | {line}")
+
         stats["tasks_deleted"] += len(lines_to_delete)
         if not dry_run:
             stats["files_modified"] += 1
+
+            # Log deleted tasks to file if log path is specified
+            log_file_path = os.environ.get("OVTM_LOGFILE_PATH")
+            if log_file_path:
+                try:
+                    log_path = Path(log_file_path).expanduser().resolve()
+                    # Ensure parent directory exists
+                    log_path.parent.mkdir(parents=True, exist_ok=True)
+                    with open(log_path, "a", encoding="utf-8") as f:
+                        for log_entry in deleted_tasks_log:
+                            f.write(log_entry + "\n")
+                    print(f"Deleted tasks logged to: {log_path}")
+                except Exception as e:
+                    print(f"Warning: Could not write to log file: {e}", file=sys.stderr)
 
     return stats
 
