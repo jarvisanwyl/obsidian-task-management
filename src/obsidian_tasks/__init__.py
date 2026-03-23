@@ -500,13 +500,3 @@ def delete_completed_tasks(
     )
 
 
-if __name__ == "__main__":
-    # For quick testing
-    import sys
-    if len(sys.argv) > 1:
-        vault = sys.argv[1]
-        cache = sys.argv[2] if len(sys.argv) > 2 else "tasks.json"
-        refresh_tasks_cache(vault, cache)
-    else:
-        print("Usage: python obsidian_tasks.py <vault_path> [cache_file]")
-        sys.exit(1)

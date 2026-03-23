@@ -11,7 +11,7 @@ import os
 
 # Import core functions
 try:
-    from obsidian_tasks import refresh_tasks_cache, delete_completed_tasks, load_env
+    from . import refresh_tasks_cache, delete_completed_tasks, load_env
 except ImportError:
     print("Error: Could not import obsidian_tasks module.")
     sys.exit(1)
