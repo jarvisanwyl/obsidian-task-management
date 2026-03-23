@@ -7,14 +7,21 @@ This Python script manages tasks within an Obsidian vault. It provides three mai
 3. Refresh the tasks cache by scanning the vault and exporting all tasks (active and completed) to JSON
 
 ## Installation
-The package is installable via pipx (recommended) or pip.
+The package is installable via pipx (recommended) or pip, either from the public GitHub repository or from local source.
 
-**pipx** (isolated environment):
+### From GitHub (remote)
+```bash
+pipx install git+https://github.com/jarvisanwyl/obsidian-task-management.git
+```
+or with pip:
+```bash
+pip install git+https://github.com/jarvisanwyl/obsidian-task-management.git
+```
+
+### From local source
 ```bash
 pipx install .
 ```
-
-**pip** (global or virtual environment):
 ```bash
 pip install .
 ```
