@@ -1,5 +1,7 @@
 # Obsidian Task Management
 
+[![Public Repository](https://img.shields.io/badge/Repository-Public-brightgreen)](https://github.com/jarvisanwyl/obsidian-task-management)
+
 A Python utility for managing tasks in Obsidian vaults.
 
 ## Overview
@@ -9,12 +11,26 @@ This tool helps maintain task lists in Obsidian markdown files by:
 
 ## Installation
 
-### Via pipx (recommended)
+### From GitHub (remote)
+The easiest way to install the latest version directly from the public repository:
+
+```bash
+pipx install git+https://github.com/jarvisanwyl/obsidian-task-management.git
+```
+
+Or with pip (global or virtual environment):
+
+```bash
+pip install git+https://github.com/jarvisanwyl/obsidian-task-management.git
+```
+
+### From local source
+If you have cloned the repository locally:
+
 ```bash
 pipx install .
 ```
 
-### Via pip (global or virtual environment)
 ```bash
 pip install .
 ```
@@ -22,12 +38,30 @@ pip install .
 After installation, the command `obsidian-task-management` is available globally. You can also run the module directly with `python -m obsidian_tasks`.
 
 ## Quick Start
-1. Clone this repository
-2. Install (see above) or run directly:
-   ```bash
-   python -m obsidian_tasks --help
-   ```
-3. Configure environment variables `OVTM_VAULT_PATH` and `OVTM_TASK_CACHE_FILEPATH` or pass them via command line.
+
+### Option 1: Install from GitHub
+```bash
+pipx install git+https://github.com/jarvisanwyl/obsidian-task-management.git
+obsidian-task-management --help
+```
+
+### Option 2: Clone and install locally
+```bash
+git clone https://github.com/jarvisanwyl/obsidian-task-management.git
+cd obsidian-task-management
+pipx install .  # or pip install .
+obsidian-task-management --help
+```
+
+### Option 3: Run without installing
+```bash
+git clone https://github.com/jarvisanwyl/obsidian-task-management.git
+cd obsidian-task-management
+python -m obsidian_tasks --help
+```
+
+### Configuration
+Set environment variables `OVTM_VAULT_PATH` and `OVTM_TASK_CACHE_FILEPATH` or pass them via command line.
 
 ## Features
 - **Clean completed tasks**: Automatically remove checked-off tasks from markdown files
