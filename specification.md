@@ -6,6 +6,23 @@ This Python script manages tasks within an Obsidian vault. It provides three mai
 2. Delete completed tasks using an existing JSON cache (low‑level operation)
 3. Refresh the tasks cache by scanning the vault and exporting all tasks (active and completed) to JSON
 
+## Installation
+The package is installable via pipx (recommended) or pip.
+
+**pipx** (isolated environment):
+```bash
+pipx install .
+```
+
+**pip** (global or virtual environment):
+```bash
+pip install .
+```
+
+After installation, the command `obsidian-task-management` will be available globally. Alternatively, you can run the module directly with `python -m obsidian_tasks`.
+
+The project uses a `src/` layout and is configured as a standard Python package via `pyproject.toml`.
+
 ## Problem Statement
 Obsidian vaults often contain many task lists in markdown files. Completed tasks (`[x]`) accumulate over time and clutter notes. Additionally, there's no easy way to get an overview of all active tasks across the entire vault with their metadata (due dates, priorities, etc.).
 
@@ -36,10 +53,12 @@ Obsidian vaults often contain many task lists in markdown files. Completed tasks
   1. If `refresh_cache` is `True`, call `refresh_tasks_cache(vault_path, cache_file_path)`.
   2. Call `delete_completed_tasks_per_cache(cache_file_path)` to perform the actual deletion.
   3. Report statistics: number of tasks deleted, number of files modified, any errors.
+- **Error Handling**: If the cache file does not exist and `refresh_cache` is False, the function raises a `ValueError` with a helpful message suggesting to use `--refresh-cache`. The CLI catches this error and prints it to stderr.
 
 ### Function 2: Delete Completed Tasks Per Cache (Low‑level)
 - **Parameters**:
   - `cache_file_path` (str): Path to tasks JSON cache (must exist).
+- **Error Handling**: If the cache file does not exist, raises `FileNotFoundError` with a message suggesting to refresh the cache using `--refresh-cache`.
 - **Workflow**:
   1. Load JSON cache from `cache_file_path`.
   2. Group completed tasks by `note_path`.
@@ -96,21 +115,25 @@ Obsidian vaults often contain many task lists in markdown files. Completed tasks
 - Environment variables `OVTM_VAULT_PATH` and `OVTM_TASK_CACHE_FILEPATH` provide defaults; can be set in `.env` file (python‑dotenv optional dependency). If a vault path is provided, a `.env` file inside the vault directory will also be loaded.
 
 ## Usage Examples
+After installation via pipx or pip, the command `obsidian-task-management` is available globally. You can also run the module directly with `python -m obsidian_tasks`.
+
 ```bash
 # Delete completed tasks with dry‑run preview
-python obsidian_tasks.py --vault ~/obsidian-vault --clean --dry-run
+obsidian-task-management --vault ~/obsidian-vault --clean --dry-run
+# or
+python -m obsidian_tasks --vault ~/obsidian-vault --clean --dry-run
 
 # Delete completed tasks (using existing cache)
-python obsidian_tasks.py --vault ~/obsidian-vault --clean
+obsidian-task-management --vault ~/obsidian-vault --clean
 
 # Delete completed tasks, refresh cache first
-python obsidian_tasks.py --vault ~/obsidian-vault --clean --refresh-cache
+obsidian-task-management --vault ~/obsidian-vault --clean --refresh-cache
 
 # Refresh tasks cache (using environment variables for paths)
-python obsidian_tasks.py --refresh-cache
+obsidian-task-management --refresh-cache
 
 # Refresh tasks cache with explicit paths
-python obsidian_tasks.py --vault ~/obsidian-vault --cache-file ~/tasks.json
+obsidian-task-management --vault ~/obsidian-vault --cache-file ~/tasks.json
 ```
 
 ## Dependencies
