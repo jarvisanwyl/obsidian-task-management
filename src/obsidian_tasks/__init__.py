@@ -334,7 +334,10 @@ def delete_completed_tasks_per_cache(
     # Load cache
     cache_path = Path(cache_file_path).expanduser().resolve()
     if not cache_path.exists():
-        raise FileNotFoundError(f"Cache file not found: {cache_path}")
+        raise FileNotFoundError(
+            f"Cache file not found: {cache_path}\n"
+            "You need to refresh the task cache first using the --refresh-cache option."
+        )
 
     with open(cache_path, "r", encoding="utf-8") as f:
         tasks = json.load(f)
@@ -494,6 +497,11 @@ def delete_completed_tasks(
 
     if refresh_cache:
         refresh_tasks_cache(str(vault_path), str(cache_file_path))
+    elif not cache_file_path.exists():
+        raise ValueError(
+            f"Cache file not found: {cache_file_path}\n"
+            "You need to refresh the task cache first using the --refresh-cache option."
+        )
 
     return delete_completed_tasks_per_cache(
         str(vault_path), str(cache_file_path), dry_run

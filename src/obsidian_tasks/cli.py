@@ -26,12 +26,17 @@ def clean_tasks(
     """
     Delete completed tasks from markdown files.
     """
-    stats = delete_completed_tasks(
-        vault_path=str(vault_path),
-        cache_file_path=str(cache_file_path) if cache_file_path else None,
-        refresh_cache=refresh_cache,
-        dry_run=dry_run,
-    )
+    try:
+        stats = delete_completed_tasks(
+            vault_path=str(vault_path),
+            cache_file_path=str(cache_file_path) if cache_file_path else None,
+            refresh_cache=refresh_cache,
+            dry_run=dry_run,
+        )
+    except (ValueError, FileNotFoundError) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    
     print("\n=== Deletion Statistics ===")
     print(f"Tasks deleted: {stats['tasks_deleted']}")
     print(f"Files modified: {stats['files_modified']}")
