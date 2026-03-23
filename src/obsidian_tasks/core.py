@@ -138,6 +138,7 @@ def refresh_tasks_cache(
 
             task_obj = {
                 "task": task_data["description"],
+                "task_line": task_line,  # Store raw line for exact matching
                 "due_date": task_data["due_date"],
                 "priority": task_data["priority"],
                 "note_path": note_path,
@@ -370,22 +371,6 @@ def delete_completed_tasks_per_cache(
         "dry_run": dry_run,
     }
 
-    # Helper to clean a task description (remove tags, date markers, priority icons)
-    def clean_description(text: str) -> str:
-        """Remove tags (#tag), date markers (📅 YYYY-MM-DD), priority icons."""
-        # Remove tags
-        words = text.split()
-        words = [w for w in words if not w.startswith("#")]
-        text = " ".join(words)
-        # Remove date marker 📅 YYYY-MM-DD
-        text = re.sub(r"📅\s*\d{4}-\d{2}-\d{2}", "", text)
-        # Remove priority icons
-        for icon in ("⏫", "🔺", "🔽"):
-            text = text.replace(icon, "")
-        # Normalize whitespace
-        text = re.sub(r"\s+", " ", text).strip()
-        return text
-
     # Process each note
     for note_rel, note_tasks in notes_dict.items():
         note_abs = vault_root / note_rel
@@ -411,14 +396,11 @@ def delete_completed_tasks_per_cache(
             # Check if this line is a completed task ([x] or [X])
             if not re.match(r"^[ \t]*[-*+][ \t]+\[[xX]\]", line_stripped):
                 continue
-            # Remove bullet and checkbox
-            desc_start = line_stripped.find("]") + 1
-            raw_desc = line_stripped[desc_start:].strip()
-            cleaned_desc = clean_description(raw_desc)
+            # Match using raw line from cache (not cleaned description)
             for task in note_tasks:
-                cached_desc = task.get("task", "")
-                if cached_desc and cached_desc == cleaned_desc:
-                    # Exact match
+                cached_line = task.get("task_line", "")
+                if cached_line and cached_line == line_stripped:
+                    # Exact match with raw line
                     lines_to_delete.add(i)
                     # If dry run, print the line that would be deleted
                     if dry_run:
