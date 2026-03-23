@@ -8,6 +8,7 @@ import os
 import re
 import sys
 import tempfile
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Tuple
 
@@ -397,6 +398,9 @@ def delete_completed_tasks_per_cache(
         "dry_run": dry_run,
     }
 
+    # Create timestamp for this run
+    run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     # Collect deleted tasks for logging
     deleted_tasks_log = []
 
@@ -453,7 +457,7 @@ def delete_completed_tasks_per_cache(
             # Record deleted tasks for logging
             for i in lines_to_delete:
                 line = lines[i].strip()
-                deleted_tasks_log.append(f"{note_abs} | {line}")
+                deleted_tasks_log.append(f"{run_timestamp} | {note_abs} | {line}")
 
         stats["tasks_deleted"] += len(lines_to_delete)
         if not dry_run:
