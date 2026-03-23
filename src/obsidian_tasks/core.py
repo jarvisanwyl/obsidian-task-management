@@ -459,19 +459,20 @@ def delete_completed_tasks_per_cache(
         if not dry_run:
             stats["files_modified"] += 1
 
-            # Log deleted tasks to file if log path is specified
-            log_file_path = os.environ.get("OVTM_LOGFILE_PATH")
-            if log_file_path:
-                try:
-                    log_path = Path(log_file_path).expanduser().resolve()
-                    # Ensure parent directory exists
-                    log_path.parent.mkdir(parents=True, exist_ok=True)
-                    with open(log_path, "a", encoding="utf-8") as f:
-                        for log_entry in deleted_tasks_log:
-                            f.write(log_entry + "\n")
-                    print(f"Deleted tasks logged to: {log_path}")
-                except Exception as e:
-                    print(f"Warning: Could not write to log file: {e}", file=sys.stderr)
+    # Log deleted tasks to file if log path is specified and any deletions occurred
+    if deleted_tasks_log and not dry_run:
+        log_file_path = os.environ.get("OVTM_LOGFILE_PATH")
+        if log_file_path:
+            try:
+                log_path = Path(log_file_path).expanduser().resolve()
+                # Ensure parent directory exists
+                log_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(log_path, "a", encoding="utf-8") as f:
+                    for log_entry in deleted_tasks_log:
+                        f.write(log_entry + "\n")
+                print(f"Deleted tasks logged to: {log_path}")
+            except Exception as e:
+                print(f"Warning: Could not write to log file: {e}", file=sys.stderr)
 
     return stats
 
