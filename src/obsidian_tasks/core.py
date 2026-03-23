@@ -4,6 +4,8 @@ Obsidian Task Management - Core functionality.
 """
 
 import json
+import logging
+import logging.handlers
 import os
 import re
 import sys
@@ -471,10 +473,40 @@ def delete_completed_tasks_per_cache(
                 log_path = Path(log_file_path).expanduser().resolve()
                 # Ensure parent directory exists
                 log_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(log_path, "a", encoding="utf-8") as f:
-                    for log_entry in deleted_tasks_log:
-                        f.write(log_entry + "\n")
-                print(f"Deleted tasks logged to: {log_path}")
+
+                # Setup rotating file handler
+                max_bytes = 5 * 1024 * 1024  # 5 MB
+                backup_count = 5
+
+                # Configure logger
+                logger = logging.getLogger("obsidian_task_manager")
+                logger.setLevel(logging.INFO)
+                logger.handlers.clear()  # Clear any existing handlers
+
+                # Create rotating file handler
+                file_handler = logging.handlers.RotatingFileHandler(
+                    log_path,
+                    maxBytes=max_bytes,
+                    backupCount=backup_count,
+                    encoding="utf-8"
+                )
+                file_handler.setLevel(logging.INFO)
+
+                # Create formatter and add to handler
+                formatter = logging.Formatter('%(message)s')
+                file_handler.setFormatter(formatter)
+
+                # Add handler to logger
+                logger.addHandler(file_handler)
+
+                # Write all log entries
+                for log_entry in deleted_tasks_log:
+                    logger.info(log_entry)
+
+                # Close handler
+                file_handler.close()
+
+                print(f"Deleted tasks logged to: {log_path} (max size: {max_bytes/1024/1024}MB, backups: {backup_count})")
             except Exception as e:
                 print(f"Warning: Could not write to log file: {e}", file=sys.stderr)
 
