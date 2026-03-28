@@ -87,15 +87,22 @@ def refresh_tasks_cache(
     tasks = []
     md_files = list(vault_root.rglob("*.md"))
 
-    print(f"Found {len(md_files)} markdown files.")
+    # Exclude hidden files and directories (files/folders starting with dot)
+    md_files = [
+        f for f in md_files
+        if not f.name.startswith('.')
+        and not any(d.startswith('.') for d in f.relative_to(vault_root).parts if d)
+    ]
+
+    print(f"Found {len(md_files)} markdown files (excluding hidden files).")
 
     # First pass: filter files that contain an opening square bracket
     files_with_brackets = []
     for md_file in md_files:
         try:
-            # Quick check: read first few KB for '['
+            # Quick check: read entire file for '['
             with open(md_file, "r", encoding="utf-8") as f:
-                content = f.read(8192)
+                content = f.read()
                 if "[" in content:
                     files_with_brackets.append(md_file)
         except Exception as e:
